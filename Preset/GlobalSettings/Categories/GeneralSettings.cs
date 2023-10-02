@@ -62,7 +62,7 @@ namespace SAIN.Preset.GlobalSettings
         [Name("No Bush ESP Debug")]
         [Default(false)]
         [Advanced]
-        public bool NoBushESPDebugMode = true;
+        public bool NoBushESPDebugMode = false;
 
         [Name("HeadShot Protection")]
         [Description("Experimental, will move bot's aiming target if it ends up on the player's head. NOT FOOLPROOF. It's more of a strong suggestion rather than a hard limit. If you find you are dying to headshots too frequently still, I recommend increasing your head health with another mod.")]
