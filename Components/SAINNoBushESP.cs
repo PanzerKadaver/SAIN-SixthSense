@@ -14,6 +14,12 @@ using SAIN.SAINComponent.Classes.WeaponFunction;
 using SAIN.SAINComponent.Classes.Mover;
 using SAIN.SAINComponent.Classes;
 using SAIN.SAINComponent.SubComponents;
+using Comfort.Common;
+using UnityEngine.Audio;
+using System.IO;
+using System.Threading.Tasks;
+using SAIN.Helpers;
+using UnityEngine.Networking;
 
 namespace SAIN.Components
 {
@@ -67,10 +73,53 @@ namespace SAIN.Components
         private BotOwner BotOwner;
         private SAINComponentClass SAIN;
 
+        private AudioClip SixthSenseAudioClip;
+
         public void Init(BotOwner botOwner, SAINComponentClass sain = null)
         {
             BotOwner = botOwner;
             SAIN = sain;
+            SixthSenseAudioClip = null;
+
+            LoadAudioClip();
+        }
+
+        async private void LoadAudioClip()
+        {
+            string path = Path.Combine(JsonUtility.GetSAINPluginPath(), "SixthSense.ogg");
+            SixthSenseAudioClip = await RequestAudioClip(path);
+
+            if (SixthSenseAudioClip == null && DebugMode)
+            {
+                Logger.LogDebug($"Unable to find AudioClip at [{path}].");
+            }
+            else
+            {
+                Logger.LogDebug($"Audio clip at path [{path}] loaded.");
+            }
+        }
+
+        async static Task<AudioClip> RequestAudioClip(string path)
+        {
+            AudioType audioType = AudioType.OGGVORBIS;
+
+            UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip(path, audioType);
+            var SendWeb = request.SendWebRequest();
+
+            while(!SendWeb.isDone)
+            {
+                await Task.Yield();
+            }
+
+            if (request.isNetworkError || request.isHttpError)
+            {
+                return null;
+            }
+            else
+            {
+                AudioClip audioClip = DownloadHandlerAudioClip.GetContent(request);
+                return audioClip;
+            }
         }
 
         private static GeneralSettings GeneralSettings => SAINPlugin.LoadedPreset?.GlobalSettings?.General;
@@ -79,6 +128,9 @@ namespace SAIN.Components
         private static float EnhancedRatio => GeneralSettings == null ? 0.5f : GeneralSettings.NoBushESPEnhancedRatio;
         private static float Frequency => GeneralSettings == null ? 0.1f : GeneralSettings.NoBushESPFrequency;
         private static bool DebugMode => GeneralSettings?.NoBushESPDebugMode == true;
+        private static bool SixthSense => GeneralSettings?.SixthSense == true;
+        private static float SixthSenseCooldown => GeneralSettings == null ? 5f : GeneralSettings.SixthSenseCooldownTimer;
+        private static float SixthSenseVolume => GeneralSettings == null ? 25f : GeneralSettings.SixthSenseVolume;
 
         private static readonly ManualLogSource Logger;
 
@@ -101,6 +153,8 @@ namespace SAIN.Components
         public bool NoBushESPActive { get; private set; } = false;
 
         private float NoBushTimer = 0f;
+        private float SixthSenseTimer = 0f;
+
         private Vector3 HeadPosition => BotOwner.LookSensor._headPoint;
 
         public bool NoBushESPCheck()
@@ -109,8 +163,26 @@ namespace SAIN.Components
             if (enemy != null && (enemy.IsVisible || enemy.CanShoot))
             {
                 Player player = enemy?.Person as Player;
-                if (player?.IsYourPlayer == true)
+                if (player?.IsYourPlayer == true && enemy.IsVisible)
                 {
+                    if (DebugMode)
+                    {
+                        Logger.LogDebug($"PLAYER IN SIGHT ! CHECKING SIXTH SENSE [{Time.time}/{SixthSenseTimer}]");
+                    }
+                    if (SixthSense && Time.time > SixthSenseTimer)
+                    {
+                        AudioSource source = player.GetOrAddComponent<AudioSource>();
+                        SixthSenseTimer = Time.time + SixthSenseCooldown;
+
+                        if (DebugMode)
+                        {
+                            Logger.LogDebug($"DRING DRING");
+                            Logger.LogDebug($"Source : [{source}]");
+                            Logger.LogDebug($"Clip : [{SixthSenseAudioClip}]");
+                        }
+
+                        source.PlayOneShot(SixthSenseAudioClip, ((float)SixthSenseVolume / 100f));
+                    }
                     if (EnhancedChecks)
                     {
                         return NoBushESPCheckEnhanced(player);
@@ -127,7 +199,10 @@ namespace SAIN.Components
         public bool NoBushESPCheck(IAIDetails player)
         {
             Vector3 partPos = player.MainParts[BodyPartType.body].Position;
-            return RayCast(partPos, HeadPosition);
+            bool active = RayCast(partPos, HeadPosition);
+
+
+            return active;
         }
 
         public bool NoBushESPCheckEnhanced(IAIDetails player)

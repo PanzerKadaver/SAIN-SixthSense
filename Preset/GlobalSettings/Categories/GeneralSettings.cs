@@ -15,6 +15,23 @@ namespace SAIN.Preset.GlobalSettings
         [Default(true)]
         public bool NoBushESPToggle = true;
 
+        [Name("Sixth Sense")]
+        [Description("Play a sound whenever the player get spotted by an ennemy bot. Need No Bush ESP to be turned ON.")]
+        [Default(true)]
+        public bool SixthSense = true;
+
+        [Name("Sixth Sense Cooldown Timer")]
+        [Description("Set the cooldown between each time the Sixth Sense trigger (in seconds).")]
+        [Default(5f)]
+        [MinMax(1f, 10f, 100f)]
+        public float SixthSenseCooldownTimer = 5f;
+
+        [Name("Sixth Sense Volume")]
+        [Description("Set the volume of the audio of the Sixth Sense.")]
+        [Default(25f)]
+        [MinMax(1f, 100f, 100f)]
+        public float SixthSenseVolume = 50f;
+
         [Name("Enhanced Cover Finding - Experimental")]
         [Description("CAN REDUCE PERFORMANCE. Improves bot reactions in a fight by decreasing the time it takes to find cover, can help with bots standing still occasionally before running for cover. Comes at the cost of some reduced performance overall.")]
         [Default(false)]
@@ -45,7 +62,7 @@ namespace SAIN.Preset.GlobalSettings
         [Name("No Bush ESP Debug")]
         [Default(false)]
         [Advanced]
-        public bool NoBushESPDebugMode = false;
+        public bool NoBushESPDebugMode = true;
 
         [Name("HeadShot Protection")]
         [Description("Experimental, will move bot's aiming target if it ends up on the player's head. NOT FOOLPROOF. It's more of a strong suggestion rather than a hard limit. If you find you are dying to headshots too frequently still, I recommend increasing your head health with another mod.")]

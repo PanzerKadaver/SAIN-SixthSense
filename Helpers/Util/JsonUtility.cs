@@ -230,7 +230,7 @@ namespace SAIN.Helpers
             return path;
         }
 
-        private static string GetSAINPluginPath()
+        public static string GetSAINPluginPath()
         {
             string pluginFolder = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             var path = Path.Combine(pluginFolder, nameof(SAIN));
